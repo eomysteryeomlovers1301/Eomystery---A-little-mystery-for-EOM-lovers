@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | EOMYSTERY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">♡</span>
+      <span>EOMYSTERY<small>ADMIN PANEL</small></span>
+    </a>
+    <div class="header-right">
+      <span id="adminName">Admin</span>
+      <a href="index.html" class="header-link">Xem website ↗</a>
+      <button id="logoutBtn" class="logout-btn">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">EOMYSTERY MANAGEMENT</p>
+        <h1>Quản lý sản phẩm <span>♡</span></h1>
+        <p class="welcome-desc">Quản lý những món đồ nhỏ xinh dành cho EOM lovers.</p>
+      </div>
+      <button id="addProductBtn" class="primary-btn">＋ Thêm sản phẩm</button>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span class="stat-icon">♡</span>
+        <span class="stat-label">TỔNG SẢN PHẨM</span>
+        <strong id="totalCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">✿</span>
+        <span class="stat-label">ĐANG BÁN</span>
+        <strong id="sellingCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">♡</span>
+        <span class="stat-label">HẾT HÀNG</span>
+        <strong id="soldOutCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">☁</span>
+        <span class="stat-label">ĐÃ ẨN</span>
+        <strong id="hiddenCount">0</strong>
+      </article>
+    </section>
+
+    <section class="product-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR COLLECTION</p>
+          <h2>Danh sách sản phẩm</h2>
+        </div>
+        <button id="refreshBtn" class="refresh-btn">↻ Làm mới</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-filter="selling">ĐANG BÁN <span id="tabSelling">0</span></button>
+          <button class="tab" data-filter="soldout">HẾT HÀNG <span id="tabSoldout">0</span></button>
+          <button class="tab" data-filter="hidden">ĐÃ ẨN <span id="tabHidden">0</span></button>
+        </div>
+        <input id="searchInput" class="search-input" type="search" placeholder="Tìm tên sản phẩm...">
+      </div>
+
+      <div id="productGrid" class="product-grid">
+        <div class="loading">Đang tải sản phẩm...</div>
+      </div>
+      <p id="emptyMessage" class="empty-message" hidden>Chưa có sản phẩm trong mục này.</p>
+    </section>
+  </main>
+
+  <div id="productModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">EOMYSTERY SHOP</p>
+          <h2 id="modalTitle">Thêm sản phẩm mới</h2>
+        </div>
+        <button id="closeModalBtn" class="close-btn" aria-label="Đóng">×</button>
+      </div>
+
+      <form id="productForm">
+        <input type="hidden" id="productId">
+
+        <label class="field-label">Ảnh sản phẩm <span>*</span></label>
+        <label class="image-upload" for="productImage">
+          <img id="imagePreview" alt="Ảnh xem trước" hidden>
+          <span id="uploadPlaceholder">
+            <span class="upload-icon">＋</span>
+            <strong>Chọn ảnh từ thiết bị</strong>
+            <small>JPG, PNG hoặc WEBP</small>
+          </span>
+          <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        </label>
+        <p class="field-hint">Ảnh sản phẩm thật sẽ được lưu trong kho ảnh EOMYSTERY.</p>
+
+        <label class="field-label" for="productName">Tên sản phẩm <span>*</span></label>
+        <input id="productName" class="form-input" type="text" maxlength="150" placeholder="Nhập tên sản phẩm" required>
+
+        <label class="field-label" for="productDescription">Mô tả sản phẩm</label>
+        <textarea id="productDescription" class="form-input" rows="4" placeholder="Mô tả sản phẩm..."></textarea>
+
+        <div class="form-row">
+          <div>
+            <label class="field-label" for="productPrice">Giá bán (VNĐ) <span>*</span></label>
+            <input id="productPrice" class="form-input" type="number" min="0" step="1000" placeholder="Ví dụ: 30000" required>
+          </div>
+          <div>
+            <label class="field-label" for="productStock">Số lượng tồn kho <span>*</span></label>
+            <input id="productStock" class="form-input" type="number" min="0" step="1" value="0" required>
+          </div>
+        </div>
+
+        <label class="checkbox-row">
+          <input id="productActive" type="checkbox" checked>
+          <span>Hiển thị sản phẩm trên website</span>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelBtn" class="secondary-btn">Hủy</button>
+          <button type="submit" id="saveProductBtn" class="primary-btn">Lưu sản phẩm</button>
+        </div>
+        <p id="formMessage" class="form-message" role="status"></p>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
