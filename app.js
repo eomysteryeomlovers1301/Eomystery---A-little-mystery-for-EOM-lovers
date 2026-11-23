@@ -289,7 +289,7 @@
 
     if (!/^\+84\d{9,10}$/.test(phone)) {
       showMessage(
-        "Số điện thoại chưa đúng. Bơ hãy nhập số điện thoại Việt Nam hợp lệ."
+        "Số điện thoại chưa đúng. Vui lòng nhập số điện thoại Việt Nam hợp lệ."
       );
       return;
     }
@@ -307,33 +307,50 @@
     setLoading(true, "Đang tạo tài khoản...");
 
     try {
-      const { data, error } = await db.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
+      const { data, error } = await db.functions.invoke(
+        "register-customer",
+        {
+          body: {
             full_name: fullName,
-            phone: phone
-          },
-          emailRedirectTo: window.location.origin +
-            window.location.pathname
+            phone,
+            email,
+            password
+          }
         }
-      });
+      );
 
-      if (error) throw error;
+      if (error) {
+        console.error("Registration function error:", error);
 
-      if (!data.user) {
-        throw new Error("Không thể tạo tài khoản. Vui lòng thử lại.");
+        let detail = "";
+
+        if (error.context instanceof Response) {
+          try {
+            const responseBody = await error.context.clone().json();
+            detail = responseBody?.message || "";
+          } catch {
+            // Giữ thông báo lỗi mặc định nếu phản hồi không phải JSON.
+          }
+        }
+
+        throw new Error(
+          detail ||
+          data?.message ||
+          error.message ||
+          "Không thể tạo tài khoản. Vui lòng thử lại."
+        );
       }
 
-      if (data.session) {
-        await db.auth.signOut();
+      if (!data || !data.success) {
+        throw new Error(
+          data?.message || "Không thể tạo tài khoản. Vui lòng thử lại."
+        );
       }
 
       authForm?.reset();
 
       showMessage(
-        "Đăng ký thành công! Hãy kiểm tra email để xác nhận tài khoản trước khi đăng nhập.",
+        "Đăng ký thành công! EOMYSTERY đã gửi email xác minh. Hãy kiểm tra hộp thư đến và cả mục Spam nhé.",
         "success"
       );
 
@@ -342,11 +359,15 @@
 
       let message = error.message || "Đăng ký thất bại.";
 
+      const lowerMessage = message.toLowerCase();
+
       if (
-        message.toLowerCase().includes("duplicate") ||
-        message.toLowerCase().includes("unique")
+        lowerMessage.includes("duplicate") ||
+        lowerMessage.includes("unique") ||
+        lowerMessage.includes("already registered") ||
+        lowerMessage.includes("already exists")
       ) {
-        message = "Số điện thoại hoặc thông tin tài khoản đã được sử dụng.";
+        message = "Email hoặc số điện thoại này đã được sử dụng.";
       }
 
       showMessage(message);
@@ -406,7 +427,7 @@
 
       await loadCurrentProfile();
 
-      alert("Đăng nhập thành công. Chào mừng Bơ đến với EOMYSTERY!");
+      alert("Đăng nhập thành công. Chào mừng bạn đến với EOMYSTERY!");
 
     } catch (error) {
       console.error("Login error:", error);
@@ -488,7 +509,7 @@
 
   async function logoutCustomer() {
     const confirmed = window.confirm(
-      "Bơ có chắc muốn đăng xuất khỏi EOMYSTERY không?"
+      "Bạn có chắc muốn đăng xuất khỏi EOMYSTERY không?"
     );
 
     if (!confirmed) return;
@@ -505,7 +526,7 @@
 
     updateHeader();
 
-    alert("Bơ đã đăng xuất khỏi EOMYSTERY.");
+    alert("Bạn đã đăng xuất khỏi EOMYSTERY.");
   }
 
   // ========================================
@@ -530,7 +551,7 @@
 
       productList.innerHTML = `
         <div class="empty-state">
-          Chưa thể tải sản phẩm. Bơ hãy thử tải lại trang nhé.
+          Chưa thể tải sản phẩm. Vui lòng thử tải lại trang nhé.
         </div>
       `;
       return;
@@ -738,7 +759,7 @@
     if (!validItems.length) {
       cartItems.innerHTML = `
         <div class="empty-state">
-          Giỏ hàng của Bơ đang trống ♡
+          Giỏ hàng của bạn đang trống ♡
         </div>
       `;
     } else {
@@ -871,7 +892,7 @@
     if (!currentUser) {
       closeCart();
       openAuth("login");
-      showMessage("Bơ hãy đăng nhập trước khi đặt hàng.");
+      showMessage("Vui lòng đăng nhập trước khi đặt hàng.");
       return;
     }
 
