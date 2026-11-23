@@ -4,6 +4,8 @@
    A little mystery for EOM lovers.
 ===================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+
 :root {
   --pink: #d98bab;
   --pink-dark: #bd6f91;
@@ -27,16 +29,20 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
-  font-family: "Georgia", "Times New Roman", serif;
-  color: var(--text);
-  background: var(--cream);
-  line-height: 1.6;
+body,
+button,
+input,
+textarea,
+select {
+  font-family: 'Be Vietnam Pro', sans-serif;
 }
 
-button,
-input {
-  font: inherit;
+body {
+  color: var(--text);
+  background: var(--cream);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -79,19 +85,19 @@ button {
 .brand {
   display: flex;
   flex-direction: column;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .brand-name {
   font-size: 25px;
-  font-weight: bold;
+  font-weight: 700;
   letter-spacing: 4px;
   color: var(--pink-dark);
 }
 
 .brand-tagline {
   font-size: 10px;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   color: var(--muted);
 }
 
@@ -103,6 +109,7 @@ button {
 
 .main-nav a {
   font-size: 13px;
+  font-weight: 500;
   transition: color 0.2s;
 }
 
@@ -122,6 +129,7 @@ button {
   background: transparent;
   color: var(--text);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .text-button:hover {
@@ -137,7 +145,8 @@ button {
   background: var(--pink);
   color: white;
   font-size: 13px;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
   transition: 0.25s ease;
   box-shadow: 0 5px 15px rgba(217, 139, 171, 0.2);
 }
@@ -154,12 +163,13 @@ button {
   background: white;
   color: var(--text);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .cart-button span {
   margin-left: 5px;
   color: var(--pink-dark);
-  font-weight: bold;
+  font-weight: 700;
 }
 
 /* HERO */
@@ -208,16 +218,16 @@ button {
 .eyebrow {
   color: var(--pink-dark);
   font-size: 10px;
-  letter-spacing: 4px;
-  font-family: Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: 3px;
 }
 
 .hero h1 {
   margin: 20px 0;
   font-size: clamp(42px, 7vw, 76px);
-  line-height: 1.15;
-  font-weight: normal;
-  letter-spacing: -2px;
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: -1.5px;
   color: #805469;
 }
 
@@ -225,6 +235,7 @@ button {
   margin-bottom: 30px;
   color: var(--muted);
   font-size: 15px;
+  font-weight: 300;
 }
 
 .hero-button {
@@ -235,7 +246,8 @@ button {
   margin-top: 45px;
   color: var(--pink-dark);
   font-size: 11px;
-  letter-spacing: 3px;
+  font-weight: 600;
+  letter-spacing: 2px;
 }
 
 /* PRODUCTS */
@@ -253,13 +265,14 @@ button {
 .section-heading h2 {
   margin: 12px 0;
   font-size: clamp(27px, 4vw, 38px);
-  font-weight: normal;
+  font-weight: 400;
   color: #805469;
 }
 
 .section-heading > p:last-child {
   color: var(--muted);
   font-size: 13px;
+  font-weight: 400;
 }
 
 .product-grid {
@@ -276,6 +289,7 @@ button {
   border-radius: 12px;
   color: var(--muted);
   background: #fffafd;
+  font-size: 13px;
 }
 
 /* AUTHENTICATION */
@@ -314,7 +328,7 @@ button {
 .cart-card h2 {
   margin: 12px 0 8px;
   font-size: 32px;
-  font-weight: normal;
+  font-weight: 400;
   color: #805469;
 }
 
@@ -343,6 +357,7 @@ button {
   margin-bottom: 7px;
   color: var(--text);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .form-field input {
@@ -424,6 +439,7 @@ button {
   background: #f9eaf0;
   color: #987588;
   font-size: 11px;
+  font-weight: 400;
 }
 
 .footer-logo {
@@ -434,7 +450,7 @@ button {
   display: inline-block;
   color: var(--pink-dark);
   font-size: 23px;
-  font-weight: bold;
+  font-weight: 700;
   letter-spacing: 4px;
 }
 
@@ -447,14 +463,15 @@ button {
 }
 
 .footer-tagline {
-  font-style: italic;
+  font-weight: 300;
   margin-bottom: 8px;
 }
 
 .footer-theme {
   color: var(--pink-dark);
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   margin: 12px 0 20px;
+  font-weight: 600;
 }
 
 .footer-divider {
@@ -466,6 +483,22 @@ button {
 
 .site-footer p {
   margin: 5px 0;
+}
+
+/* FOOTER CONTACT LINK */
+
+.footer-contact {
+  display: inline-block;
+  margin: 12px 0;
+  color: var(--pink-dark);
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.footer-contact:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 
 /* RESPONSIVE */
