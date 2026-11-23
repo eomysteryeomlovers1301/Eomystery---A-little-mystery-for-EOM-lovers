@@ -978,7 +978,7 @@
 
           <label for="eomAddress">Địa chỉ nhận hàng *</label>
           <textarea id="eomAddress" required
-            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố (trước khi sáp nhập tỉnh/thành)"></textarea>
 
           <label for="eomSocial">Facebook / Threads</label>
           <input id="eomSocial" placeholder="Link Facebook hoặc Threads (không bắt buộc)">
