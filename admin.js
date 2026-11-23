@@ -1,9 +1,11 @@
 
 (() => {
+  "use strict";
+
   const config = window.EOMYSTERY_CONFIG;
 
-  if (!config || !window.supabase) {
-    alert('Không tải được cấu hình Supabase. Hãy kiểm tra config.js.');
+  if (!config || !config.SUPABASE_URL || !config.SUPABASE_ANON_KEY || !window.supabase) {
+    alert("Không tải được cấu hình Supabase. Hãy kiểm tra config.js.");
     return;
   }
 
@@ -15,67 +17,96 @@
   const $ = id => document.getElementById(id);
 
   let products = [];
-  let activeFilter = 'selling';
+  let activeFilter = "selling";
   let selectedImage = null;
-  let currentImageUrl = '';
+  let currentImageUrl = "";
   let currentUser = null;
 
+  let selectedQrImage = null;
+  let qrPreviewUrl = "";
+
   const money = value =>
-    new Intl.NumberFormat('vi-VN').format(Number(value || 0)) + 'đ';
+    new Intl.NumberFormat("vi-VN").format(Number(value || 0)) + "đ";
 
   function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
     })[char]);
   }
 
   function toast(message) {
-    const element = $('toast');
+    const element = $("toast");
+    if (!element) return;
+
     element.textContent = message;
-    element.classList.add('show');
+    element.classList.add("show");
+
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => element.classList.remove('show'), 3000);
+    toast.timer = setTimeout(
+      () => element.classList.remove("show"),
+      3000
+    );
   }
 
   function setMessage(message, success = false) {
-    const element = $('formMessage');
+    const element = $("formMessage");
+    if (!element) return;
+
     element.textContent = message;
-    element.classList.toggle('success', success);
+    element.classList.toggle("success", success);
   }
+
+  function setQrMessage(message, success = false) {
+    const element = $("qrMessage");
+    if (!element) return;
+
+    element.textContent = message;
+    element.classList.toggle("success", success);
+  }
+
+  // ========================================
+  // 1. AUTHENTICATION AND ADMIN CHECK
+  // ========================================
 
   async function initialize() {
     const { data: sessionData, error: sessionError } =
       await db.auth.getSession();
 
     if (sessionError || !sessionData.session) {
-      showAccessError('Bạn cần đăng nhập tài khoản Admin trước.');
+      showAccessError("Bạn cần đăng nhập tài khoản Admin trước.");
       return;
     }
 
     currentUser = sessionData.session.user;
 
     const { data: profile, error } = await db
-      .from('profiles')
-      .select('full_name, role')
-      .eq('id', currentUser.id)
+      .from("profiles")
+      .select("full_name, role")
+      .eq("id", currentUser.id)
       .maybeSingle();
 
     if (error) {
-      showAccessError('Không kiểm tra được quyền tài khoản: ' + error.message);
+      showAccessError(
+        "Không kiểm tra được quyền tài khoản: " + error.message
+      );
       return;
     }
 
-    if (!profile || profile.role !== 'admin') {
-      showAccessError('Tài khoản hiện tại chưa được cấp quyền Admin.');
+    if (!profile || profile.role !== "admin") {
+      showAccessError("Tài khoản hiện tại chưa được cấp quyền Admin.");
       return;
     }
 
-    $('adminName').textContent = profile.full_name || 'Admin';
-    await loadProducts();
+    $("adminName").textContent = profile.full_name || "Admin";
+
+    await Promise.all([
+      loadProducts(),
+      loadCurrentQr()
+    ]);
   }
 
   function showAccessError(message) {
@@ -98,17 +129,22 @@
       </main>`;
   }
 
+  // ========================================
+  // 2. PRODUCT MANAGEMENT
+  // ========================================
+
   async function loadProducts() {
-    $('productGrid').innerHTML = '<div class="loading">Đang tải sản phẩm...</div>';
+    $("productGrid").innerHTML =
+      '<div class="loading">Đang tải sản phẩm...</div>';
 
     const { data, error } = await db
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      $('productGrid').innerHTML = '';
-      toast('Không tải được sản phẩm: ' + error.message);
+      $("productGrid").innerHTML = "";
+      toast("Không tải được sản phẩm: " + error.message);
       return;
     }
 
@@ -118,51 +154,53 @@
   }
 
   function getCategory(product) {
-    if (!product.is_active) return 'hidden';
-    if (Number(product.stock) <= 0) return 'soldout';
-    return 'selling';
+    if (!product.is_active) return "hidden";
+    if (Number(product.stock) <= 0) return "soldout";
+    return "selling";
   }
 
   function updateStats() {
     const counts = {
-      selling: products.filter(p => getCategory(p) === 'selling').length,
-      soldout: products.filter(p => getCategory(p) === 'soldout').length,
-      hidden: products.filter(p => getCategory(p) === 'hidden').length
+      selling: products.filter(p => getCategory(p) === "selling").length,
+      soldout: products.filter(p => getCategory(p) === "soldout").length,
+      hidden: products.filter(p => getCategory(p) === "hidden").length
     };
 
-    $('totalCount').textContent = products.length;
-    $('sellingCount').textContent = counts.selling;
-    $('soldOutCount').textContent = counts.soldout;
-    $('hiddenCount').textContent = counts.hidden;
+    $("totalCount").textContent = products.length;
+    $("sellingCount").textContent = counts.selling;
+    $("soldOutCount").textContent = counts.soldout;
+    $("hiddenCount").textContent = counts.hidden;
 
-    $('tabSelling').textContent = counts.selling;
-    $('tabSoldout').textContent = counts.soldout;
-    $('tabHidden').textContent = counts.hidden;
+    $("tabSelling").textContent = counts.selling;
+    $("tabSoldout").textContent = counts.soldout;
+    $("tabHidden").textContent = counts.hidden;
   }
 
   function renderProducts() {
-    const keyword = $('searchInput').value.trim().toLowerCase();
+    const keyword = $("searchInput").value.trim().toLowerCase();
 
     const filtered = products.filter(product => {
       const matchesCategory = getCategory(product) === activeFilter;
       const matchesSearch =
-        String(product.name || '').toLowerCase().includes(keyword);
+        String(product.name || "").toLowerCase().includes(keyword);
+
       return matchesCategory && matchesSearch;
     });
 
-    $('productGrid').innerHTML = '';
-    $('emptyMessage').hidden = filtered.length > 0;
+    $("productGrid").innerHTML = "";
+    $("emptyMessage").hidden = filtered.length > 0;
 
     filtered.forEach(product => {
       const category = getCategory(product);
+
       const statusText = {
-        selling: 'ĐANG BÁN',
-        soldout: 'HẾT HÀNG',
-        hidden: 'ĐÃ ẨN'
+        selling: "ĐANG BÁN",
+        soldout: "HẾT HÀNG",
+        hidden: "ĐÃ ẨN"
       }[category];
 
       const image = product.image_url
-        ? `<img class="product-image ${category === 'soldout' ? 'soldout' : ''}"
+        ? `<img class="product-image ${category === "soldout" ? "soldout" : ""}"
              src="${escapeHTML(product.image_url)}"
              alt="${escapeHTML(product.name)}"
              loading="lazy">`
@@ -170,12 +208,13 @@
              display:grid;place-items:center;color:#bd7895;font-size:35px
            ">♡</div>`;
 
-      const toggleButton = category === 'hidden'
-        ? `<button class="action-btn" data-action="show" data-id="${product.id}">Hiện lại</button>`
-        : `<button class="action-btn" data-action="hide" data-id="${product.id}">Ẩn</button>`;
+      const toggleButton = category === "hidden"
+        ? `<button class="action-btn" data-action="show" data-id="${escapeHTML(product.id)}">Hiện lại</button>`
+        : `<button class="action-btn" data-action="hide" data-id="${escapeHTML(product.id)}">Ẩn</button>`;
 
-      const card = document.createElement('article');
-      card.className = 'product-card';
+      const card = document.createElement("article");
+      card.className = "product-card";
+
       card.innerHTML = `
         <div class="product-image-wrap">
           ${image}
@@ -184,73 +223,84 @@
         <div class="product-info">
           <h3>${escapeHTML(product.name)}</h3>
           <p class="product-description">
-            ${escapeHTML(product.description || 'Chưa có mô tả sản phẩm.')}
+            ${escapeHTML(product.description || "Chưa có mô tả sản phẩm.")}
           </p>
           <div class="product-meta">
             <span class="product-price">${money(product.price)}</span>
             <span class="product-stock">Tồn kho: ${Number(product.stock || 0)}</span>
           </div>
           <div class="product-actions">
-            <button class="action-btn" data-action="edit" data-id="${product.id}">Sửa</button>
-            <button class="action-btn" data-action="stock" data-id="${product.id}">Cập nhật kho</button>
+            <button class="action-btn" data-action="edit" data-id="${escapeHTML(product.id)}">Sửa</button>
+            <button class="action-btn" data-action="stock" data-id="${escapeHTML(product.id)}">Cập nhật kho</button>
             ${toggleButton}
-            <button class="action-btn delete" data-action="delete" data-id="${product.id}">Xóa</button>
+            <button class="action-btn delete" data-action="delete" data-id="${escapeHTML(product.id)}">Xóa</button>
           </div>
         </div>`;
-      $('productGrid').appendChild(card);
+
+      $("productGrid").appendChild(card);
     });
   }
 
   function openModal(product = null) {
-    $('productForm').reset();
-    $('productId').value = product?.id || '';
-    $('modalTitle').textContent = product ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới';
-    $('saveProductBtn').textContent = product ? 'Lưu thay đổi' : 'Lưu sản phẩm';
+    $("productForm").reset();
+
+    $("productId").value = product?.id || "";
+    $("modalTitle").textContent =
+      product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới";
+
+    $("saveProductBtn").textContent =
+      product ? "Lưu thay đổi" : "Lưu sản phẩm";
 
     selectedImage = null;
-    currentImageUrl = product?.image_url || '';
-    $('productName').value = product?.name || '';
-    $('productDescription').value = product?.description || '';
-    $('productPrice').value = product?.price ?? '';
-    $('productStock').value = product?.stock ?? 0;
-    $('productActive').checked = product ? Boolean(product.is_active) : true;
+    currentImageUrl = product?.image_url || "";
+
+    $("productName").value = product?.name || "";
+    $("productDescription").value = product?.description || "";
+    $("productPrice").value = product?.price ?? "";
+    $("productStock").value = product?.stock ?? 0;
+    $("productActive").checked =
+      product ? Boolean(product.is_active) : true;
 
     if (currentImageUrl) {
-      $('imagePreview').src = currentImageUrl;
-      $('imagePreview').hidden = false;
-      $('uploadPlaceholder').hidden = true;
+      $("imagePreview").src = currentImageUrl;
+      $("imagePreview").hidden = false;
+      $("uploadPlaceholder").hidden = true;
     } else {
-      $('imagePreview').hidden = true;
-      $('imagePreview').removeAttribute('src');
-      $('uploadPlaceholder').hidden = false;
+      $("imagePreview").hidden = true;
+      $("imagePreview").removeAttribute("src");
+      $("uploadPlaceholder").hidden = false;
     }
 
-    setMessage('');
-    $('productModal').classList.add('open');
-    $('productModal').setAttribute('aria-hidden', 'false');
+    setMessage("");
+
+    $("productModal").classList.add("open");
+    $("productModal").setAttribute("aria-hidden", "false");
   }
 
   function closeModal() {
-    $('productModal').classList.remove('open');
-    $('productModal').setAttribute('aria-hidden', 'true');
-    $('productForm').reset();
+    $("productModal").classList.remove("open");
+    $("productModal").setAttribute("aria-hidden", "true");
+    $("productForm").reset();
+
     selectedImage = null;
+    $("productImage").value = "";
   }
 
   async function uploadImage(file) {
-    const extension = file.name.split('.').pop().toLowerCase();
-    const safeExtension = ['jpg', 'jpeg', 'png', 'webp'].includes(extension)
+    const extension = file.name.split(".").pop().toLowerCase();
+
+    const safeExtension = ["jpg", "jpeg", "png", "webp"].includes(extension)
       ? extension
-      : 'jpg';
+      : "jpg";
 
     const filePath =
-      currentUser.id + '/' + Date.now() + '-' +
-      Math.random().toString(36).slice(2, 9) + '.' + safeExtension;
+      currentUser.id + "/" + Date.now() + "-" +
+      Math.random().toString(36).slice(2, 9) + "." + safeExtension;
 
     const { error } = await db.storage
-      .from('product-images')
+      .from("product-images")
       .upload(filePath, file, {
-        cacheControl: '3600',
+        cacheControl: "3600",
         upsert: false,
         contentType: file.type
       });
@@ -258,7 +308,7 @@
     if (error) throw error;
 
     const { data } = db.storage
-      .from('product-images')
+      .from("product-images")
       .getPublicUrl(filePath);
 
     return data.publicUrl;
@@ -267,27 +317,32 @@
   async function saveProduct(event) {
     event.preventDefault();
 
-    const name = $('productName').value.trim();
-    const description = $('productDescription').value.trim();
-    const price = Number($('productPrice').value);
-    const stock = Number($('productStock').value);
-    const isActive = $('productActive').checked;
-    const id = $('productId').value;
+    const name = $("productName").value.trim();
+    const description = $("productDescription").value.trim();
+    const price = Number($("productPrice").value);
+    const stock = Number($("productStock").value);
+    const isActive = $("productActive").checked;
+    const id = $("productId").value;
 
-    if (!name) return setMessage('Vui lòng nhập tên sản phẩm.');
+    if (!name) return setMessage("Vui lòng nhập tên sản phẩm.");
+
     if (!Number.isFinite(price) || price < 0) {
-      return setMessage('Giá sản phẩm không hợp lệ.');
-    }
-    if (!Number.isInteger(stock) || stock < 0) {
-      return setMessage('Số lượng tồn kho phải là số nguyên từ 0 trở lên.');
-    }
-    if (!id && !selectedImage) {
-      return setMessage('Vui lòng chọn ảnh sản phẩm.');
+      return setMessage("Giá sản phẩm không hợp lệ.");
     }
 
-    const button = $('saveProductBtn');
+    if (!Number.isInteger(stock) || stock < 0) {
+      return setMessage(
+        "Số lượng tồn kho phải là số nguyên từ 0 trở lên."
+      );
+    }
+
+    if (!id && !selectedImage) {
+      return setMessage("Vui lòng chọn ảnh sản phẩm.");
+    }
+
+    const button = $("saveProductBtn");
     button.disabled = true;
-    button.textContent = 'Đang lưu...';
+    button.textContent = "Đang lưu...";
 
     try {
       let imageUrl = currentImageUrl;
@@ -309,41 +364,49 @@
 
       if (id) {
         result = await db
-          .from('products')
+          .from("products")
           .update(productData)
-          .eq('id', id);
+          .eq("id", id);
       } else {
         result = await db
-          .from('products')
+          .from("products")
           .insert(productData);
       }
 
       if (result.error) throw result.error;
 
       closeModal();
-      toast(id ? 'Đã cập nhật sản phẩm ♡' : 'Đã thêm sản phẩm mới ♡');
+
+      toast(id
+        ? "Đã cập nhật sản phẩm ♡"
+        : "Đã thêm sản phẩm mới ♡");
+
       await loadProducts();
 
     } catch (error) {
-      setMessage('Không lưu được: ' + error.message);
+      setMessage("Không lưu được: " + error.message);
+
     } finally {
       button.disabled = false;
-      button.textContent = id ? 'Lưu thay đổi' : 'Lưu sản phẩm';
+      button.textContent = id ? "Lưu thay đổi" : "Lưu sản phẩm";
     }
   }
 
   async function changeVisibility(product, visible) {
     const { error } = await db
-      .from('products')
+      .from("products")
       .update({ is_active: visible })
-      .eq('id', product.id);
+      .eq("id", product.id);
 
     if (error) {
-      toast('Không cập nhật được: ' + error.message);
+      toast("Không cập nhật được: " + error.message);
       return;
     }
 
-    toast(visible ? 'Đã hiển thị lại sản phẩm.' : 'Đã ẩn sản phẩm.');
+    toast(visible
+      ? "Đã hiển thị lại sản phẩm."
+      : "Đã ẩn sản phẩm.");
+
     await loadProducts();
   }
 
@@ -358,23 +421,23 @@
     const stock = Number(answer);
 
     if (!Number.isInteger(stock) || stock < 0) {
-      toast('Số lượng phải là số nguyên từ 0 trở lên.');
+      toast("Số lượng phải là số nguyên từ 0 trở lên.");
       return;
     }
 
     const { error } = await db
-      .from('products')
+      .from("products")
       .update({ stock })
-      .eq('id', product.id);
+      .eq("id", product.id);
 
     if (error) {
-      toast('Không cập nhật được: ' + error.message);
+      toast("Không cập nhật được: " + error.message);
       return;
     }
 
     toast(stock === 0
-      ? 'Sản phẩm đã chuyển sang mục HẾT HÀNG.'
-      : 'Đã cập nhật số lượng tồn kho.');
+      ? "Sản phẩm đã chuyển sang mục HẾT HÀNG."
+      : "Đã cập nhật số lượng tồn kho.");
 
     await loadProducts();
   }
@@ -387,86 +450,320 @@
     if (!confirmed) return;
 
     const { error } = await db
-      .from('products')
+      .from("products")
       .delete()
-      .eq('id', product.id);
+      .eq("id", product.id);
 
     if (error) {
-      toast('Không xóa được: ' + error.message);
+      toast("Không xóa được: " + error.message);
       return;
     }
 
-    toast('Đã xóa sản phẩm.');
+    toast("Đã xóa sản phẩm.");
     await loadProducts();
   }
 
-  $('addProductBtn').addEventListener('click', () => openModal());
-  $('closeModalBtn').addEventListener('click', closeModal);
-  $('cancelBtn').addEventListener('click', closeModal);
-  $('refreshBtn').addEventListener('click', loadProducts);
-  $('productForm').addEventListener('submit', saveProduct);
-  $('searchInput').addEventListener('input', renderProducts);
+  // ========================================
+  // 3. PAYMENT QR MANAGEMENT
+  // ========================================
 
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(item =>
-        item.classList.remove('active')
+  async function loadCurrentQr() {
+    $("qrCurrentMessage").textContent = "Đang tải mã QR...";
+    $("currentQrImage").hidden = true;
+    $("currentQrPlaceholder").hidden = false;
+
+    const { data, error } = await db
+      .from("payment_settings")
+      .select("qr_image_url")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (error) {
+      $("qrCurrentMessage").textContent =
+        "Không tải được QR: " + error.message;
+      return;
+    }
+
+    if (!data || !data.qr_image_url) {
+      $("qrCurrentMessage").textContent =
+        "Chưa có mã QR thanh toán. Hãy tải ảnh QR lên.";
+      return;
+    }
+
+    $("currentQrImage").src = data.qr_image_url;
+    $("currentQrImage").hidden = false;
+    $("currentQrPlaceholder").hidden = true;
+
+    $("qrCurrentMessage").textContent =
+      "Mã QR hiện tại đang được sử dụng trên website.";
+  }
+
+  function resetQrSelection() {
+    selectedQrImage = null;
+
+    if (qrPreviewUrl) {
+      URL.revokeObjectURL(qrPreviewUrl);
+      qrPreviewUrl = "";
+    }
+
+    $("qrImageInput").value = "";
+    $("qrImagePreview").removeAttribute("src");
+    $("qrImagePreview").hidden = true;
+    $("qrUploadPlaceholder").hidden = false;
+    $("saveQrBtn").disabled = true;
+  }
+
+  function validateQrFile(file) {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error("Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP.");
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      throw new Error("Ảnh QR tối đa 8 MB nhé.");
+    }
+  }
+
+  async function uploadQrImage(file) {
+    const extension = file.name.split(".").pop().toLowerCase();
+
+    const safeExtension = ["jpg", "jpeg", "png", "webp"].includes(extension)
+      ? extension
+      : "png";
+
+    const filePath =
+      currentUser.id + "/payment-qr-" +
+      Date.now() + "-" +
+      Math.random().toString(36).slice(2, 8) +
+      "." + safeExtension;
+
+    const { error: uploadError } = await db.storage
+      .from("payment-qr")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = db.storage
+      .from("payment-qr")
+      .getPublicUrl(filePath);
+
+    if (!data?.publicUrl) {
+      throw new Error("Không lấy được đường dẫn ảnh QR.");
+    }
+
+    return {
+      filePath,
+      publicUrl: data.publicUrl
+    };
+  }
+
+  async function saveQrImage() {
+    if (!selectedQrImage) {
+      setQrMessage("Vui lòng chọn ảnh QR trước.");
+      return;
+    }
+
+    const button = $("saveQrBtn");
+    button.disabled = true;
+    button.textContent = "Đang cập nhật...";
+
+    let uploadedFilePath = null;
+
+    try {
+      // Upload ảnh lên Storage trước.
+      const uploaded = await uploadQrImage(selectedQrImage);
+
+      uploadedFilePath = uploaded.filePath;
+
+      // Cập nhật đường dẫn QR trong payment_settings.
+      const { data, error } = await db
+        .from("payment_settings")
+        .update({
+          qr_image_url: uploaded.publicUrl
+        })
+        .eq("id", 1)
+        .select("id, qr_image_url")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "Không tìm thấy dòng cấu hình payment_settings có id = 1, hoặc tài khoản không có quyền cập nhật."
+        );
+      }
+
+      // Cập nhật ảnh đang hiển thị trên Admin.
+      $("currentQrImage").src = data.qr_image_url;
+      $("currentQrImage").hidden = false;
+      $("currentQrPlaceholder").hidden = true;
+
+      $("qrCurrentMessage").textContent =
+        "Mã QR mới đang được sử dụng trên website.";
+
+      resetQrSelection();
+
+      setQrMessage(
+        "Đã cập nhật mã QR thanh toán thành công ♡",
+        true
       );
-      tab.classList.add('active');
+
+      toast("Đã cập nhật mã QR thanh toán ♡");
+
+    } catch (error) {
+      console.error("Save QR error:", error);
+
+      // Nếu ảnh đã upload nhưng cập nhật database thất bại,
+      // thử xóa ảnh vừa upload để tránh file thừa.
+      if (uploadedFilePath) {
+        const { error: cleanupError } = await db.storage
+          .from("payment-qr")
+          .remove([uploadedFilePath]);
+
+        if (cleanupError) {
+          console.warn("Không xóa được ảnh QR tải lên lỗi:", cleanupError);
+        }
+      }
+
+      setQrMessage("Không cập nhật được QR: " + error.message);
+      button.disabled = false;
+    } finally {
+      button.textContent = "Cập nhật mã QR";
+
+      if (!selectedQrImage) {
+        button.disabled = true;
+      }
+    }
+  }
+
+  // ========================================
+  // 4. EVENT LISTENERS
+  // ========================================
+
+  $("addProductBtn").addEventListener("click", () => openModal());
+
+  $("closeModalBtn").addEventListener("click", closeModal);
+  $("cancelBtn").addEventListener("click", closeModal);
+
+  $("refreshBtn").addEventListener("click", loadProducts);
+  $("productForm").addEventListener("submit", saveProduct);
+  $("searchInput").addEventListener("input", renderProducts);
+
+  $("refreshQrBtn").addEventListener("click", loadCurrentQr);
+  $("saveQrBtn").addEventListener("click", saveQrImage);
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(item =>
+        item.classList.remove("active")
+      );
+
+      tab.classList.add("active");
       activeFilter = tab.dataset.filter;
+
       renderProducts();
     });
   });
 
-  $('productImage').addEventListener('change', event => {
+  $("productImage").addEventListener("change", event => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      toast('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP.');
-      event.target.value = '';
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast("Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP.");
+      event.target.value = "";
       return;
     }
 
     if (file.size > 8 * 1024 * 1024) {
-      toast('Ảnh tối đa 8 MB nhé.');
-      event.target.value = '';
+      toast("Ảnh tối đa 8 MB nhé.");
+      event.target.value = "";
       return;
     }
 
     selectedImage = file;
+
     const previewUrl = URL.createObjectURL(file);
-    $('imagePreview').src = previewUrl;
-    $('imagePreview').hidden = false;
-    $('uploadPlaceholder').hidden = true;
+    $("imagePreview").src = previewUrl;
+    $("imagePreview").hidden = false;
+    $("uploadPlaceholder").hidden = true;
   });
 
-  $('productGrid').addEventListener('click', event => {
-    const button = event.target.closest('[data-action]');
+  $("qrImageInput").addEventListener("change", event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      validateQrFile(file);
+
+      selectedQrImage = file;
+
+      if (qrPreviewUrl) {
+        URL.revokeObjectURL(qrPreviewUrl);
+      }
+
+      qrPreviewUrl = URL.createObjectURL(file);
+
+      $("qrImagePreview").src = qrPreviewUrl;
+      $("qrImagePreview").hidden = false;
+      $("qrUploadPlaceholder").hidden = true;
+
+      $("saveQrBtn").disabled = false;
+
+      setQrMessage("Ảnh QR đã sẵn sàng. Nhấn cập nhật để lưu.");
+
+    } catch (error) {
+      selectedQrImage = null;
+      event.target.value = "";
+
+      $("saveQrBtn").disabled = true;
+      setQrMessage(error.message);
+    }
+  });
+
+  $("productGrid").addEventListener("click", event => {
+    const button = event.target.closest("[data-action]");
     if (!button) return;
 
     const product = products.find(p =>
       String(p.id) === String(button.dataset.id)
     );
+
     if (!product) return;
 
     const action = button.dataset.action;
 
-    if (action === 'edit') openModal(product);
-    if (action === 'stock') updateStock(product);
-    if (action === 'hide') changeVisibility(product, false);
-    if (action === 'show') changeVisibility(product, true);
-    if (action === 'delete') deleteProduct(product);
+    if (action === "edit") openModal(product);
+    if (action === "stock") updateStock(product);
+    if (action === "hide") changeVisibility(product, false);
+    if (action === "show") changeVisibility(product, true);
+    if (action === "delete") deleteProduct(product);
   });
 
-  $('productModal').addEventListener('click', event => {
-    if (event.target.matches('[data-close-modal]')) closeModal();
+  $("productModal").addEventListener("click", event => {
+    if (event.target.matches("[data-close-modal]")) {
+      closeModal();
+    }
   });
 
-  $('logoutBtn').addEventListener('click', async () => {
+  $("logoutBtn").addEventListener("click", async () => {
     await db.auth.signOut();
-    window.location.href = 'index.html';
+    window.location.href = "index.html";
   });
+
+  // ========================================
+  // 5. START
+  // ========================================
 
   initialize();
+
 })();
