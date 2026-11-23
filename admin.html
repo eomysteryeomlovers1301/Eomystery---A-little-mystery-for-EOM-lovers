@@ -26,7 +26,7 @@
     <section class="welcome">
       <div>
         <p class="eyebrow">EOMYSTERY MANAGEMENT</p>
-        <h1>Quản lý sản phẩm <span>♡</span></h1>
+        <h1>Quản lý cửa hàng <span>♡</span></h1>
         <p class="welcome-desc">Quản lý những món đồ nhỏ xinh dành cho EOM lovers.</p>
       </div>
       <button id="addProductBtn" class="primary-btn">＋ Thêm sản phẩm</button>
@@ -53,6 +53,66 @@
         <span class="stat-label">ĐÃ ẨN</span>
         <strong id="hiddenCount">0</strong>
       </article>
+    </section>
+
+    <!-- PAYMENT QR MANAGEMENT -->
+    <section class="qr-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PAYMENT SETTINGS</p>
+          <h2>Mã QR thanh toán ♡</h2>
+          <p class="qr-description">
+            Quản lý mã QR hiển thị tại bước thanh toán của khách hàng.
+          </p>
+        </div>
+        <button id="refreshQrBtn" class="refresh-btn" type="button">↻ Tải lại QR</button>
+      </div>
+
+      <div class="qr-management">
+        <div class="qr-current">
+          <p class="qr-label">MÃ QR ĐANG SỬ DỤNG</p>
+          <div class="qr-preview-box">
+            <img id="currentQrImage" alt="Mã QR thanh toán hiện tại" hidden>
+            <div id="currentQrPlaceholder" class="qr-placeholder">
+              <span>♡</span>
+              <strong>Chưa có mã QR</strong>
+              <small>Hãy tải ảnh QR lên để bắt đầu.</small>
+            </div>
+          </div>
+          <p id="qrCurrentMessage" class="qr-status">Đang kiểm tra mã QR...</p>
+        </div>
+
+        <div class="qr-upload">
+          <p class="qr-label">CẬP NHẬT MÃ QR MỚI</p>
+
+          <label class="qr-upload-box" for="qrImageInput">
+            <img id="qrImagePreview" alt="Ảnh QR xem trước" hidden>
+            <span id="qrUploadPlaceholder">
+              <span class="upload-icon">＋</span>
+              <strong>Chọn ảnh QR từ thiết bị</strong>
+              <small>Hỗ trợ JPG, PNG hoặc WEBP</small>
+            </span>
+          </label>
+
+          <input
+            id="qrImageInput"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            hidden
+          >
+
+          <p class="field-hint">
+            Nên sử dụng ảnh QR rõ nét, không bị cắt mất thông tin tài khoản.
+            Dung lượng tối đa 8 MB.
+          </p>
+
+          <button id="saveQrBtn" class="primary-btn qr-save-btn" type="button" disabled>
+            Cập nhật mã QR
+          </button>
+
+          <p id="qrMessage" class="qr-message" role="status"></p>
+        </div>
+      </div>
     </section>
 
     <section class="product-section">
