@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fff5f9">
+  <meta name="description" content="EOMYSTERY - A little mystery for EOM lovers.">
+  <title>EOMYSTERY | A little mystery for EOM lovers</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <a href="#" class="brand">
+      <span class="brand-name">EOMYSTERY</span>
+      <span class="brand-tagline">A little mystery for EOM lovers.</span>
+    </a>
+
+    <nav class="main-nav">
+      <a href="#home">Trang chủ</a>
+      <a href="#products">Sản phẩm</a>
+      <a href="#footer">Liên hệ</a>
+    </nav>
+
+    <div class="header-actions">
+      <button id="loginBtn" class="text-button">Đăng nhập</button>
+      <button id="registerBtn" class="pink-button">Đăng ký</button>
+      <button id="cartBtn" class="cart-button">
+        Giỏ hàng <span id="cartCount">0</span>
+      </button>
+      <button id="accountBtn" class="text-button hidden">Tài khoản</button>
+      <button id="logoutBtn" class="text-button hidden">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <div class="hero-decoration">୨୧</div>
+      <p class="eyebrow">WELCOME TO EOMYSTERY</p>
+      <h1>A little mystery<br>for EOM lovers.</h1>
+      <p class="hero-description">
+        A special little corner made with love.
+      </p>
+      <a href="#products" class="pink-button hero-button">
+        Khám phá sản phẩm
+      </a>
+      <p class="hero-signature">ONE AND ONLY SEONGHYEON ♡</p>
+    </section>
+
+    <section id="products" class="products-section">
+      <div class="section-heading">
+        <p class="eyebrow">THE EOMYSTERY COLLECTION</p>
+        <h2>Sản phẩm của chúng mình</h2>
+        <p>Những món đồ nhỏ xinh dành cho EOM lovers.</p>
+      </div>
+
+      <div id="productList" class="product-grid">
+        <div class="empty-state">
+          Sản phẩm sẽ được cập nhật sớm ♡
+        </div>
+      </div>
+    </section>
+
+    <section id="authSection" class="auth-section hidden">
+      <div class="auth-card">
+        <button id="closeAuthBtn" class="close-button" aria-label="Đóng">×</button>
+
+        <p class="eyebrow">WELCOME TO EOMYSTERY</p>
+        <h2 id="authTitle">Đăng nhập</h2>
+        <p id="authDescription">Đăng nhập để tiếp tục hành trình mua sắm.</p>
+
+        <form id="authForm">
+          <div id="nameField" class="form-field hidden">
+            <label for="fullName">Họ và tên</label>
+            <input id="fullName" type="text" autocomplete="name"
+              placeholder="Nhập họ và tên">
+          </div>
+
+          <div class="form-field">
+            <label for="phone">Số điện thoại</label>
+            <input id="phone" type="tel" autocomplete="tel"
+              placeholder="Nhập số điện thoại" required>
+          </div>
+
+          <div class="form-field">
+            <label for="password">Mật khẩu</label>
+            <input id="password" type="password"
+              autocomplete="current-password"
+              placeholder="Nhập mật khẩu" required>
+          </div>
+
+          <div id="confirmPasswordField" class="form-field hidden">
+            <label for="confirmPassword">Xác nhận mật khẩu</label>
+            <input id="confirmPassword" type="password"
+              autocomplete="new-password"
+              placeholder="Nhập lại mật khẩu">
+          </div>
+
+          <p id="authMessage" class="form-message" aria-live="polite"></p>
+
+          <button id="authSubmitBtn" type="submit" class="pink-button full-button">
+            Đăng nhập
+          </button>
+        </form>
+
+        <p class="auth-switch">
+          <span id="authSwitchText">Chưa có tài khoản?</span>
+          <button id="authSwitchBtn" class="inline-button">Đăng ký</button>
+        </p>
+      </div>
+    </section>
+
+    <section id="cartSection" class="cart-section hidden">
+      <div class="cart-card">
+        <button id="closeCartBtn" class="close-button" aria-label="Đóng">×</button>
+        <p class="eyebrow">YOUR SHOPPING BAG</p>
+        <h2>Giỏ hàng</h2>
+        <div id="cartItems"></div>
+        <div class="cart-total">
+          <span>Tổng cộng</span>
+          <strong id="cartTotal">0đ</strong>
+        </div>
+        <button id="checkoutBtn" class="pink-button full-button">
+          Tiến hành đặt hàng
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer" class="site-footer">
+    <div id="footerLogo" class="footer-logo">
+      <span class="footer-logo-placeholder">EOMYSTERY</span>
+    </div>
+    <p class="footer-tagline">A little mystery for EOM lovers.</p>
+    <p class="footer-theme">ONE AND ONLY SEONGHYEON ♡</p>
+    <div class="footer-divider"></div>
+    <p>© 2026 EOMYSTERY. All rights reserved.</p>
+    <p>Website thuộc quyền sở hữu của EOMYSTERY.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
